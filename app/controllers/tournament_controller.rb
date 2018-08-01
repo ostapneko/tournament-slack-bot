@@ -1,5 +1,8 @@
 class TournamentController < ApplicationController
   def handle
-    render json: params["foo"]
+    case params['text']
+    when 'help'
+      render json: { text: 'Shows this' }
+    end
   end
 end
