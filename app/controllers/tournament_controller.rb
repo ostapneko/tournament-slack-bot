@@ -6,6 +6,7 @@ class TournamentController < ApplicationController
 create <tournament-name>: create a new tournament
 show: show all the tournaments
 add <player> to <tournament>
+<winner> beat <looser> in <tournament>
       EOM
     when /^create (\S+)$/
       create_tournament $1
@@ -13,6 +14,8 @@ add <player> to <tournament>
       answer_text get_tournament_names
     when /^add (\S+) to (\S+)$/
       add_player $1, $2
+    when /^(\S+) beat (\S+) in (\S+)$/
+      add_result($1, $2, $3)
     else
       answer_text "What is this command?"
     end
@@ -53,5 +56,38 @@ add <player> to <tournament>
     else
       answer_text "#{tournament_name} does not exist"
     end
+  end
+
+  def add_result(winner_name, looser_name, tournament_name)
+    t = Tournament.find_by_name!(tournament_name)
+    w = Player.find_by!(slack_name: winner_name, tournament_id: t.id)
+    l = Player.find_by!(slack_name: looser_name, tournament_id: t.id)
+
+    r1 = Result.find_by(
+      winner_id: w.id,
+      looser_id: l.id,
+      tournament_id: t.id
+    )
+
+    r2 = Result.find_by(
+      winner_id: l.id,
+      looser_id: w.id,
+      tournament_id: t.id
+    )
+
+    if r1 || r2
+      answer_text "This match has already been played!"
+    else
+      Result.create!(
+        winner_id: w.id,
+        looser_id: l.id,
+        tournament_id: t.id
+      )
+
+      answer_text "Congrats #{winner_name}!"
+    end
+
+  rescue ActiveRecord::RecordNotFound => e
+    answer_text "Invalid match. #{e.message}"
   end
 end
