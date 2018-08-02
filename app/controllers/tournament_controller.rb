@@ -40,7 +40,18 @@ add <player> to <tournament>
     Tournament
       .includes(:players)
       .map do |t|
-        t.name + ": " + t.players.map(&:slack_name).join(', ')
+      champions = t.champions
+        status =
+          if champions.any?
+            "won by #{champions.map(&:slack_name).join(', ')}"
+          elsif
+            t.players.count < 2
+            "not enough players"
+          else
+            "#{t.matches_remaining} matches to go"
+          end
+
+        t.name + " (#{status}): " + t.players.map(&:slack_name).join(', ')
       end.join("\n")
   end
 
@@ -84,7 +95,13 @@ add <player> to <tournament>
         tournament_id: t.id
       )
 
-      answer_text "Congrats #{winner_name}!"
+      result = "Congrats #{winner_name}!"
+
+      if t.champions.any?
+        result << "\nThe tournament has ended!\nCongrats to #{t.champions.map(&:slack_name).join(', ') for winning the tournament!}"
+      end
+
+      answer_text result
     end
 
   rescue ActiveRecord::RecordNotFound => e
