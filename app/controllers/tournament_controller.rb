@@ -96,9 +96,10 @@ add <player> to <tournament>
       )
 
       result = "Congrats #{winner_name}!"
+      winners = t.champions.map(&:slack_name).join(', ')
 
       if t.champions.any?
-        result << "\nThe tournament has ended!\nCongrats to #{t.champions.map(&:slack_name).join(', ') for winning the tournament!}"
+        result << "\nThe tournament has ended!\nCongrats to #{winners} for winning the tournament!"
       end
 
       answer_text result
